@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(cp .env.example .env.local)",
+      "Bash(npm run:*)",
+      "Bash(npx tsc:*)",
+      "WebSearch",
+      "WebFetch(domain:www.mediawiki.org)",
+      "WebFetch(domain:wiki.openstreetmap.org)",
+      "WebFetch(domain:nominatim.org)",
+      "Bash(curl -s \"https://r.jina.ai/https://www.instagram.com/anoodinchina/\" -H \"Accept: text/plain\")"
+    ]
+  }
+}

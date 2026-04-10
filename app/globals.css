@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+body { @apply text-gray-800 bg-gray-50; }
+
+input, textarea, select {
+  @apply outline-none focus:ring-2 focus:ring-brand-red/30 focus:border-brand-red transition-colors;
+}
+
+.btn-primary { @apply bg-brand-red text-white px-4 py-2 rounded-lg font-medium hover:bg-brand-red-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm active:scale-95; }
+.btn-secondary { @apply bg-white text-gray-700 border border-gray-200 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition-all flex items-center gap-2 text-sm active:scale-95; }
+.btn-gold { @apply bg-brand-gold text-white px-4 py-2 rounded-lg font-medium hover:bg-brand-gold-light transition-all flex items-center gap-2 text-sm active:scale-95; }
+.btn-ghost { @apply text-gray-500 px-3 py-2 rounded-lg hover:bg-gray-100 transition-all flex items-center gap-2 text-sm; }
+.card { @apply bg-white rounded-xl border border-gray-100 shadow-sm; }
+.card-hover { @apply bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all; }
+.input { @apply w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white; }
+.label { @apply block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wide; }
+.section-title { @apply text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3; }
+.badge { @apply text-xs px-2 py-0.5 rounded-full font-medium; }
+.stat-card { @apply card p-4 flex flex-col gap-1; }
+
+/* Mobile bottom nav */
+.mobile-nav { @apply fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 lg:hidden; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #D4A017; border-radius: 2px; }
+
+/* Smooth page transitions */
+main > div { animation: fadeIn 0.15s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* Drag and drop ghost */
+[draggable="true"] { user-select: none; }
+[draggable="true"]:active { opacity: 0.7; }
+
+/* Textarea no-resize by default */
+textarea { resize: vertical; }
+
+/* Table styles */
+table { border-collapse: collapse; }
