@@ -29,8 +29,8 @@ export async function POST(req: NextRequest) {
       response_format: "b64_json",
     })
 
-    const imageB64 = response.data[0].b64_json
-    const revisedPrompt = response.data[0].revised_prompt
+    const imageB64 = response.data?.[0]?.b64_json ?? ""
+    const revisedPrompt = response.data?.[0]?.revised_prompt ?? ""
 
     // Get logo as base64
     let logoB64 = ""
