@@ -186,28 +186,47 @@ export default function DailyBrief({ onNavigate }: Props) {
   return (
     <div className="space-y-3">
       {/* Top greeting bar */}
-      <div className="bg-gradient-to-r from-brand-red to-brand-red-dark rounded-2xl p-4 text-white">
-        <div className="flex items-start justify-between">
+      <div className="rounded-2xl p-5 text-white overflow-hidden relative"
+        style={{ background: "linear-gradient(135deg, #8B1515 0%, #A51C1C 60%, #7D1515 100%)" }}>
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-5"
+          style={{ backgroundImage: "radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)", backgroundSize: "40px 40px" }} />
+
+        <div className="relative flex items-start justify-between">
           <div>
-            <p className="text-white/70 text-sm">
+            <p className="text-white/60 text-sm">
               {new Date().toLocaleDateString("ar-EG", { weekday: "long", day: "numeric", month: "long" })}
               {weather && <span> · {weather.emoji} {weather.temp}°C</span>}
             </p>
-            <h1 className="text-xl font-bold mt-0.5">{greeting} يا هشام 👋</h1>
-            <div className="flex items-center gap-3 mt-2">
-              <span className="text-sm text-white/80">🔥 {store.streaks.checkinStreak} يوم</span>
-              <span className="text-sm text-white/80">📸 {store.streaks.postingStreak} ستريك</span>
+            <h1 className="text-2xl font-black mt-1 tracking-tight">{greeting} يا هشام 👋</h1>
+            <div className="flex items-center gap-3 mt-2 flex-wrap">
+              <span className="flex items-center gap-1 text-sm bg-white/10 px-2.5 py-1 rounded-full">
+                🔥 <span className="font-bold">{store.streaks.checkinStreak}</span> <span className="text-white/60">يوم</span>
+              </span>
+              <span className="flex items-center gap-1 text-sm bg-white/10 px-2.5 py-1 rounded-full">
+                📸 <span className="font-bold">{store.streaks.postingStreak}</span> <span className="text-white/60">ستريك</span>
+              </span>
               {unusedFootage.length > 0 && (
-                <span className="text-sm font-bold text-brand-gold">🎥 {unusedFootage.length} كليب ينتظرك</span>
+                <span className="flex items-center gap-1 text-sm bg-brand-gold/30 px-2.5 py-1 rounded-full font-bold text-brand-gold">
+                  🎥 {unusedFootage.length} كليب
+                </span>
               )}
             </div>
           </div>
-          <button onClick={getAISummary} disabled={loading}
-            className="bg-white/20 hover:bg-white/30 text-white text-xs px-3 py-1.5 rounded-lg shrink-0 transition-colors">
-            {loading
-              ? <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
-              : "✨ بريف AI"}
-          </button>
+          <div className="flex flex-col gap-2 shrink-0">
+            <button onClick={getAISummary} disabled={loading}
+              className="bg-white/15 hover:bg-white/25 text-white text-xs px-3 py-2 rounded-xl transition-all font-medium border border-white/20">
+              {loading
+                ? <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+                : "✨ بريف AI"}
+            </button>
+            {onNavigate && (
+              <button onClick={() => onNavigate("ai")}
+                className="bg-white text-brand-red text-xs px-3 py-2 rounded-xl transition-all font-bold shadow-sm hover:shadow-md">
+                🤖 تكلم AI
+              </button>
+            )}
+          </div>
         </div>
         {aiSummary && (
           <p className="text-white/90 text-sm mt-3 border-t border-white/20 pt-3 leading-relaxed">{aiSummary}</p>

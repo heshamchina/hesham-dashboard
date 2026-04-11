@@ -14,12 +14,14 @@ import FinanceHub from "@/components/dashboard/FinanceHub"
 import ContentCalendar from "@/components/dashboard/ContentCalendar"
 import FootageVault from "@/components/dashboard/FootageVault"
 import DailyBrief from "@/components/dashboard/DailyBrief"
+import AIChat from "@/components/dashboard/AIChat"
 import { useHydrate } from "@/lib/useHydrate"
 import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts"
 
 // ── Nav items ──────────────────────────────────────────
 const NAV = [
   { id: "home",      label: "Home",      icon: "⊞" },
+  { id: "ai",        label: "AI Chat",   icon: "🤖" },
   { id: "vault",     label: "Footage",   icon: "🎥" },
   { id: "instagram", label: "Instagram", icon: "📱" },
   { id: "calendar",  label: "Calendar",  icon: "📅" },
@@ -31,7 +33,7 @@ const NAV = [
 ]
 
 // Mobile nav shows only key 5 tabs
-const MOBILE_NAV = ["home", "vault", "instagram", "finance", "journal"]
+const MOBILE_NAV = ["home", "ai", "vault", "instagram", "finance"]
 
 // ── Today helpers ──────────────────────────────────────
 const todayStr = () => new Date().toISOString().split("T")[0]
@@ -121,10 +123,11 @@ export default function Dashboard() {
       <div className="lg:flex">
 
         {/* Sidebar (desktop) */}
-        <aside className="hidden lg:flex flex-col w-60 bg-brand-red min-h-screen fixed left-0 top-0 z-40">
+        <aside className="hidden lg:flex flex-col w-60 min-h-screen fixed left-0 top-0 z-40"
+          style={{ background: "linear-gradient(180deg, #8B1515 0%, #A51C1C 40%, #7D1515 100%)" }}>
           <div className="p-5 border-b border-white/10">
-            <img src="/logo.png" alt="HeshamChina" className="h-10 object-contain" />
-            <p className="text-white/50 text-xs mt-1.5 text-center tracking-widest uppercase">Command Center</p>
+            <img src="/logo.png" alt="HeshamChina" className="h-9 object-contain" />
+            <p className="text-white/40 text-xs mt-1.5 text-center tracking-widest uppercase font-medium">Command Center</p>
           </div>
           <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
             {/* Main */}
@@ -138,6 +141,18 @@ export default function Dashboard() {
                 <span className="text-base">{n.icon}</span>{n.label}
               </button>
             ))}
+            {/* AI Chat — prominent */}
+            <button onClick={() => setTab("ai")}
+              className={clsx(
+                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left mt-1",
+                tab === "ai"
+                  ? "bg-white text-brand-red shadow"
+                  : "bg-white/10 text-white hover:bg-white/20 border border-white/20"
+              )}>
+              <span className="text-base">🤖</span>
+              <span>AI Chat</span>
+              {tab !== "ai" && <span className="ml-auto text-xs bg-brand-gold text-white px-1.5 py-0.5 rounded-full">New</span>}
+            </button>
             <div className="pt-2 pb-1 px-3">
               <p className="text-white/30 text-xs uppercase tracking-widest font-semibold">Content</p>
             </div>
@@ -189,7 +204,7 @@ export default function Dashboard() {
         </aside>
 
         {/* Main */}
-        <main className="flex-1 lg:ml-60 p-4 lg:p-6 max-w-5xl">
+        <main className="flex-1 lg:ml-60 p-4 lg:p-8 w-full max-w-5xl min-h-screen">
 
           {/* ── HOME TAB ───────────────────────────── */}
           {tab === "home" && (
@@ -520,6 +535,19 @@ export default function Dashboard() {
             </div>
           )}
 
+          {/* ── AI CHAT TAB ───────────────────────── */}
+          {tab === "ai" && (
+            <div className="max-w-3xl">
+              <div className="mb-4">
+                <h1 className="text-xl font-bold text-gray-900">🤖 AI Chat</h1>
+                <p className="text-sm text-gray-400 mt-0.5">يعرف كل شي عن داشبوردك — صفقات، كليبات، أهداف، متابعين</p>
+              </div>
+              <div className="card overflow-hidden" style={{ height: "calc(100vh - 160px)", minHeight: 600 }}>
+                <AIChat />
+              </div>
+            </div>
+          )}
+
           {/* ── FOOTAGE VAULT TAB ─────────────────── */}
           {tab === "vault" && <FootageVault />}
 
@@ -616,19 +644,27 @@ export default function Dashboard() {
       <nav className="mobile-nav flex">
         {NAV.filter(n => MOBILE_NAV.includes(n.id)).map(n => (
           <button key={n.id} onClick={() => setTab(n.id)}
-            className={clsx("flex-1 flex flex-col items-center py-3 text-xs transition-colors",
-              tab === n.id ? "text-brand-red" : "text-gray-400"
+            className={clsx(
+              "flex-1 flex flex-col items-center py-2.5 text-xs transition-all",
+              tab === n.id ? "text-brand-red" : "text-gray-400 hover:text-gray-600"
             )}>
-            <span className="text-xl mb-0.5">{n.icon}</span>
-            {n.label}
+            <span className={clsx(
+              "text-xl mb-0.5 transition-transform",
+              tab === n.id ? "scale-110" : ""
+            )}>{n.icon}</span>
+            <span className={clsx("font-medium", tab === n.id ? "text-brand-red" : "")}>{n.label}</span>
+            {tab === n.id && <span className="w-4 h-0.5 bg-brand-red rounded-full mt-0.5" />}
           </button>
         ))}
       </nav>
 
-      {/* Floating quick capture (mobile) */}
+      {/* Floating quick capture */}
       <button
         onClick={() => { const t = prompt("Quick capture:"); if (t?.trim()) store.addCapture(t.trim()) }}
-        className="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 w-12 h-12 bg-brand-gold text-white rounded-full shadow-lg flex items-center justify-center text-2xl z-50 hover:bg-brand-gold-light transition-colors">
+        title="Quick capture"
+        aria-label="Quick capture idea"
+        className="fixed bottom-20 right-4 lg:bottom-8 lg:right-8 w-13 h-13 bg-gradient-to-br from-brand-gold to-brand-gold-light text-white rounded-2xl shadow-xl flex items-center justify-center text-2xl z-50 hover:scale-110 active:scale-95 transition-all duration-150"
+        style={{ width: 52, height: 52 }}>
         ＋
       </button>
     </div>
