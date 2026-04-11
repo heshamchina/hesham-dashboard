@@ -13,7 +13,7 @@ async function fetchWithTimeout(url: string, opts: RequestInit = {}, ms = 6000):
   } catch { return null } finally { clearTimeout(timer) }
 }
 
-function parseRSS(xml: string, label: string, maxItems = 6): string {
+function parseRSS(xml: string, label: string, maxItems = 7): string {
   const items: string[] = []
   const itemRegex = /<item>([\s\S]*?)<\/item>/g
   let match
@@ -21,81 +21,111 @@ function parseRSS(xml: string, label: string, maxItems = 6): string {
     const block = match[1]
     const title = (/<title><!\[CDATA\[(.*?)\]\]><\/title>/.exec(block) || /<title>(.*?)<\/title>/.exec(block))?.[1]?.trim()
     const desc = (/<description><!\[CDATA\[(.*?)\]\]><\/description>/.exec(block) || /<description>(.*?)<\/description>/.exec(block))?.[1]
-      ?.replace(/<[^>]+>/g, "")?.trim()?.slice(0, 150)
+      ?.replace(/<[^>]+>/g, "")?.trim()?.slice(0, 180)
     const pubDate = (/<pubDate>(.*?)<\/pubDate>/.exec(block))?.[1]?.trim()
     if (title) items.push(`[${label}] ${title}${desc ? ` — ${desc}` : ""}${pubDate ? ` (${pubDate})` : ""}`)
   }
   return items.join("\n")
 }
 
-// ── NICHE-SPECIFIC SOURCES for Arab China content creators ─────────────────
-// Only sources relevant to: China-Arab trade, halal travel China,
-// Chinese consumer trends, Arab buyers/importers, China lifestyle for Muslims
-const NICHE_SOURCES = {
-  // China-Arab trade & sourcing — what buyers are looking for
-  trade: [
-    { url: "https://www.globaltimes.cn/rss/outbrain.xml",         label: "Global Times" },
-    { url: "https://www.chinadaily.com.cn/rss/china_rss.xml",     label: "China Daily" },
-    { url: "https://www.scmp.com/rss/4/feed",                     label: "SCMP Business" },
+// ── SOURCES: What's happening IN China ────────────────────────────────────
+// Focus: cities, lifestyle, youth trends, food, travel, events, apps, markets
+const SOURCES = {
+
+  // China lifestyle, culture, what's trending among Chinese youth
+  lifestyle: [
+    { url: "https://www.sixthtone.com/feed",                       label: "Sixth Tone" },        // best source for Chinese youth/culture
+    { url: "https://www.globaltimes.cn/rss/outbrain.xml",          label: "Global Times" },
+    { url: "https://www.chinadaily.com.cn/rss/china_rss.xml",      label: "China Daily" },
   ],
-  // China economy, consumer trends, new products
-  economy: [
-    { url: "https://www.scmp.com/rss/11/feed",                    label: "SCMP Economy" },
-    { url: "https://www.chinadaily.com.cn/rss/bizchina_rss.xml",  label: "China Daily Biz" },
-    { url: "https://www.globaltimes.cn/rss/outbrain.xml",         label: "Global Times" },
-  ],
-  // China travel, tourism, new destinations
+
+  // Travel, cities, destinations going viral, check-in spots
   travel: [
-    { url: "https://www.chinadaily.com.cn/rss/travel_rss.xml",    label: "China Daily Travel" },
-    { url: "https://www.scmp.com/rss/2/feed",                     label: "SCMP China" },
-    { url: "https://www.globaltimes.cn/rss/outbrain.xml",         label: "Global Times" },
+    { url: "https://www.chinadaily.com.cn/rss/travel_rss.xml",     label: "China Daily Travel" },
+    { url: "https://www.scmp.com/rss/2/feed",                      label: "SCMP China" },
+    { url: "https://www.globaltimes.cn/rss/outbrain.xml",          label: "Global Times" },
+    { url: "https://www.sixthtone.com/feed",                       label: "Sixth Tone" },
   ],
-  // Middle East & Arab world — what's happening that relates to China
-  arab: [
+
+  // Economy, consumer trends, new brands, cheap finds, markets
+  consumer: [
+    { url: "https://www.scmp.com/rss/11/feed",                     label: "SCMP Economy" },
+    { url: "https://www.chinadaily.com.cn/rss/bizchina_rss.xml",   label: "China Daily Biz" },
+    { url: "https://www.sixthtone.com/feed",                       label: "Sixth Tone" },
+    { url: "https://www.globaltimes.cn/rss/outbrain.xml",          label: "Global Times" },
+  ],
+
+  // Tech, apps, gadgets going viral in China
+  tech: [
+    { url: "https://www.scmp.com/rss/4/feed",                      label: "SCMP Tech" },
+    { url: "https://www.chinadaily.com.cn/rss/china_rss.xml",      label: "China Daily" },
+    { url: "https://www.globaltimes.cn/rss/outbrain.xml",          label: "Global Times" },
+  ],
+
+  // Sourcing, trade, wholesale for Arab buyers
+  trade: [
+    { url: "https://www.globaltimes.cn/rss/outbrain.xml",          label: "Global Times" },
+    { url: "https://www.chinadaily.com.cn/rss/bizchina_rss.xml",   label: "China Daily Biz" },
+    { url: "https://www.scmp.com/rss/4/feed",                      label: "SCMP Business" },
+  ],
+
+  // Halal, Muslim life in China, Ramadan
+  halal: [
     { url: "https://feeds.bbci.co.uk/news/world/middle_east/rss.xml", label: "BBC Middle East" },
-    { url: "https://www.scmp.com/rss/2/feed",                     label: "SCMP" },
-  ],
-  // Chinese tech, brands, products going global
-  brands: [
-    { url: "https://www.scmp.com/rss/4/feed",                     label: "SCMP Tech/Biz" },
-    { url: "https://www.chinadaily.com.cn/rss/china_rss.xml",     label: "China Daily" },
-    { url: "https://www.globaltimes.cn/rss/outbrain.xml",         label: "Global Times" },
+    { url: "https://www.chinadaily.com.cn/rss/china_rss.xml",      label: "China Daily" },
+    { url: "https://www.sixthtone.com/feed",                       label: "Sixth Tone" },
   ],
 }
 
-const FOCUS_MAP: Record<string, (keyof typeof NICHE_SOURCES)[]> = {
-  all:      ["trade", "economy", "travel", "brands"],
-  china:    ["economy", "travel", "brands"],
-  business: ["trade", "economy", "brands"],
-  travel:   ["travel", "arab"],
-  trending: ["trade", "economy", "brands"],
-  ramadan:  ["arab", "travel"],
+const FOCUS_MAP: Record<string, (keyof typeof SOURCES)[]> = {
+  all:      ["lifestyle", "travel", "consumer", "tech"],
+  china:    ["lifestyle", "travel", "consumer", "tech"],
+  business: ["trade", "consumer", "tech"],
+  travel:   ["travel", "lifestyle"],
+  trending: ["lifestyle", "consumer", "tech", "travel"],
+  ramadan:  ["halal", "travel", "lifestyle"],
 }
 
-// Serper — search specifically for Arab-China content trends
-async function serperNicheSearch(focus: string): Promise<string[]> {
+// Serper: search for what's actually viral/trending IN China right now
+async function serperTrendSearch(focus: string): Promise<string[]> {
   const key = process.env.SERPER_API_KEY
   if (!key) return []
 
-  const queries: Record<string, string[]> = {
-    all:      ["China Arab content creator trending 2025", "الصين العرب محتوى انستغرام ريلز"],
-    china:    ["China trending viral content Arabic 2025", "صينا ريلز تريند عربي"],
-    business: ["China sourcing wholesale Arab buyers 2025 trend", "توريد صين عرب 2025"],
-    travel:   ["China Muslim halal travel 2025", "سياحة صين حلال مسلمين"],
-    trending: ["China viral reels Arabic Instagram trending", "ريلز صين تريند 2025"],
-    ramadan:  ["China halal Ramadan Muslim food travel", "رمضان صين حلال"],
+  const queryMap: Record<string, string> = {
+    all:      "China trending viral 2025 city travel food market youth",
+    china:    "China viral trend 2025 places food lifestyle",
+    business: "China wholesale market cheap finds 2025 Canton Fair sourcing",
+    travel:   "China city viral check-in destination 2025 trending tourism",
+    trending: "China trending viral Xiaohongshu Douyin 2025 youth culture",
+    ramadan:  "China halal Muslim food Ramadan 2025 mosque city",
   }
 
-  const q = queries[focus] || queries.all
+  const q = queryMap[focus] || queryMap.all
+
   try {
-    const res = await fetchWithTimeout("https://google.serper.dev/search", {
-      method: "POST",
-      headers: { "X-API-KEY": key, "Content-Type": "application/json" },
-      body: JSON.stringify({ q: q[0], num: 6, gl: "ae", hl: "ar" })
-    })
-    if (!res) return []
-    const d = await res.json()
-    return (d.organic || []).map((r: any) => `${r.title} — ${r.snippet}`).slice(0, 6)
+    const [engRes, cnRes] = await Promise.allSettled([
+      fetchWithTimeout("https://google.serper.dev/search", {
+        method: "POST",
+        headers: { "X-API-KEY": key, "Content-Type": "application/json" },
+        body: JSON.stringify({ q, num: 6, gl: "cn", hl: "en" })
+      }),
+      fetchWithTimeout("https://google.serper.dev/search", {
+        method: "POST",
+        headers: { "X-API-KEY": key, "Content-Type": "application/json" },
+        body: JSON.stringify({ q: `中国 最新 流行 ${focus === "travel" ? "旅游打卡" : focus === "ramadan" ? "清真 斋月" : "生活方式 2025"}`, num: 5, gl: "cn", hl: "zh-cn" })
+      })
+    ])
+
+    const results: string[] = []
+    if (engRes.status === "fulfilled" && engRes.value) {
+      const d = await engRes.value.json()
+      ;(d.organic || []).slice(0, 6).forEach((r: any) => results.push(`[Google EN] ${r.title} — ${r.snippet}`))
+    }
+    if (cnRes.status === "fulfilled" && cnRes.value) {
+      const d = await cnRes.value.json()
+      ;(d.organic || []).slice(0, 4).forEach((r: any) => results.push(`[Google CN] ${r.title} — ${r.snippet}`))
+    }
+    return results
   } catch { return [] }
 }
 
@@ -104,25 +134,26 @@ export async function POST(req: NextRequest) {
     const { focus = "all", date = new Date().toISOString().split("T")[0] } = await req.json()
 
     const sourceKeys = FOCUS_MAP[focus] || FOCUS_MAP.all
-    const sourcesToFetch = sourceKeys.flatMap(k => NICHE_SOURCES[k])
+    const sourcesToFetch = sourceKeys.flatMap(k => SOURCES[k])
 
     // Deduplicate by URL
     const seen = new Set<string>()
     const uniqueSources = sourcesToFetch.filter(s => { if (seen.has(s.url)) return false; seen.add(s.url); return true })
 
-    // Fetch all in parallel
+    // Fetch all RSS + Serper in parallel
     const [fetchResults, serperResults] = await Promise.all([
       Promise.allSettled(uniqueSources.map(async (src) => {
-        const raw = await fetchWithTimeout(src.url, {}, 5000)
+        const raw = await fetchWithTimeout(src.url, {}, 5500)
         if (!raw) return { label: src.label, items: "" }
         const xml = await raw.text()
-        return { label: src.label, items: parseRSS(xml, src.label, 6) }
+        return { label: src.label, items: parseRSS(xml, src.label, 7) }
       })),
-      serperNicheSearch(focus),
+      serperTrendSearch(focus),
     ])
 
     const newsLines: string[] = []
     const successfulSources: string[] = []
+
     for (const result of fetchResults) {
       if (result.status === "fulfilled" && result.value.items) {
         newsLines.push(result.value.items)
@@ -130,94 +161,101 @@ export async function POST(req: NextRequest) {
       }
     }
     if (serperResults.length > 0) {
-      newsLines.push(`=== Google Trends (Arab-China niche) ===\n${serperResults.join("\n")}`)
+      newsLines.push(`=== Google Search (China trends) ===\n${serperResults.join("\n")}`)
       successfulSources.push("Google Search")
     }
 
     const hasRealData = newsLines.length > 0
     const newsContext = newsLines.join("\n\n")
 
-    const focusAr: Record<string, string> = {
-      all:      "كل مواضيع نيش Hesham",
-      china:    "الصين — أخبار ومواضيع للجمهور العربي",
-      business: "التوريد والتجارة مع الصين",
-      travel:   "السفر الحلال والسياحة في الصين",
-      trending: "ما يتريند في الريلز العربي عن الصين",
-      ramadan:  "محتوى رمضاني — حلال وإسلام في الصين",
+    const focusLabel: Record<string, string> = {
+      all:      "everything happening in China",
+      china:    "China lifestyle, cities, culture",
+      business: "wholesale, sourcing, markets, cheap finds",
+      travel:   "cities, check-in spots, viral destinations",
+      trending: "what's viral right now — Xiaohongshu, Douyin, youth trends",
+      ramadan:  "halal food, Muslim life, Ramadan in China",
     }
 
-    const systemPrompt = `أنت استراتيجي محتوى احترافي متخصص في نيش ضيّق جداً: المحتوى العربي عن الصين.
+    const systemPrompt = `You are a content strategist for @heshaminchina — a Jordanian creator living in Beijing, 7+ years in China, 80+ cities visited, 32K Arabic Instagram followers.
 
-عن @heshaminchina:
-- أردني، 7 سنوات بالصين، 80+ مدينة، ~32K متابع
-- جمهوره: عرب مهتمون بالصين — مسافرون، مستوردون، فضوليون
-- محتواه: جولات مدن صينية، أكل حلال، أسواق جملة، ماركات صينية، حياة يومية
+His content niche: **Everything happening in China** — cities, food, markets, festivals, apps, cheap finds, viral spots, youth culture, life hacks, exhibitions, nature, urban life, weird/cool discoveries.
 
-قاعدة مهمة:
-❌ لا سياسة، لا هونج كونج، لا تايوان، لا أخبار عالمية عامة
-❌ لا موضوع ما يهتم فيه الجمهور العربي المتابع لـ Hesham
-✅ فقط مواضيع ترتبط بـ: الصين من منظور عربي، تجارة، سفر، أكل، ماركات، حياة يومية، توريد، حلال
+His audience: Arabs who are curious about China — some travel there, some do business, some just love his content.
 
-${hasRealData ? `المصادر: ${successfulSources.join(", ")}` : "استخدم معرفتك بالأحداث الراهنة."}`
+Your job: Turn the news/trends below into content ideas that would make an Arab audience say "I need to watch this."
 
-    const userPrompt = `التاريخ: ${date}
-التركيز: ${focusAr[focus] || focusAr.all}
+❌ NEVER suggest: politics, Taiwan, Hong Kong, US-China tensions, military, government policy
+✅ ALWAYS focus on: what you can actually SEE, EAT, BUY, VISIT, or EXPERIENCE in China
 
-${hasRealData ? `=== أخبار حقيقية (مفلترة لنيش Hesham) ===\n${newsContext}\n=== نهاية الأخبار ===\n` : ""}
+Great content categories for Hesham:
+- A place in China going viral to visit / check in
+- Something cheap or surprising you can buy in China
+- A Chinese city/neighborhood most people don't know
+- A food or restaurant experience
+- Something Chinese youth are obsessed with right now
+- A market, exhibition, or festival happening
+- A Chinese app or gadget that's fascinating
+- A life hack or shortcut unique to living in China
+- Behind the scenes of Chinese daily life
+${hasRealData ? `\nSources fetched: ${successfulSources.join(", ")}` : "\nUsing general knowledge of current China trends."}`
 
-بناءً على ${hasRealData ? "هذه الأخبار" : "معرفتك"} — ولّد أفكار فيديو لـ @heshaminchina.
+    const userPrompt = `Date: ${date}
+Focus: ${focusLabel[focus] || focusLabel.all}
 
-شرط: كل فكرة لازم تكون مرتبطة مباشرة بالصين وجمهوره العربي. لا عمومية.
+${hasRealData ? `=== Real news & trends from China ===\n${newsContext}\n===\n` : ""}
 
-JSON فقط (بدون markdown):
+Generate content ideas for @heshaminchina. Every idea must be something you can actually film/visit/experience in China.
+
+JSON only (no markdown):
 {
   "sourcesUsed": ["..."],
   "fetchedAt": "${date}",
   "trendingTopics": [
     {
-      "topic": "الموضوع",
-      "source": "المصدر",
-      "whyRelevant": "ليش هذا الموضوع مهم لجمهور Hesham العربي",
-      "heshamAngle": "الزاوية الفريدة لـ Hesham على هذا الموضوع — من منظوره الداخلي"
+      "topic": "What's happening / trending",
+      "source": "where this came from",
+      "whyRelevant": "why Arabs watching Hesham would care",
+      "heshamAngle": "the unique insider angle only someone who lives in China could give"
     }
   ],
   "videoIdeas": [
     {
       "id": 1,
-      "title": "عنوان الفيديو",
-      "hook": "الجملة الأولى",
-      "concept": "شرح الفكرة — مرتبطة بالصين وجمهوره العربي",
-      "sourceEvent": "الحدث أو الخبر اللي ألهم الفكرة",
+      "title": "Video title",
+      "hook": "Opening line that stops the scroll",
+      "concept": "What the video is actually about — specific, filmable",
+      "sourceEvent": "The real event/trend that inspired this",
       "series": "city-series|chinese-brands|shopping|food-halal|advice|behind-scenes|other",
       "vibe": "viral|storytelling|informative|advice|behind-scenes|series-episode",
-      "estimatedViralScore": 7,
-      "whyNow": "ليش الآن بالذات — مرتبط بالجمهور",
+      "estimatedViralScore": 8,
+      "whyNow": "Why this timing is perfect",
       "productionDifficulty": "سهل|متوسط|صعب",
-      "keyTalkingPoints": ["نقطة 1", "نقطة 2", "نقطة 3"],
-      "suggestedCaption": "كابشن",
+      "keyTalkingPoints": ["point 1", "point 2", "point 3"],
+      "suggestedCaption": "Caption in Arabic",
       "suggestedHashtags": ["#الصين", "#هشام_في_الصين"]
     }
   ],
   "seriesIdea": {
-    "name": "اسم السلسلة",
-    "concept": "فكرة مرتبطة بالصين والجمهور العربي",
-    "episodes": ["حلقة 1", "حلقة 2", "حلقة 3"],
-    "whyItWillGrow": "ليش تبني جمهور"
+    "name": "Series name",
+    "concept": "What makes this series binge-worthy",
+    "episodes": ["ep 1", "ep 2", "ep 3", "ep 4", "ep 5"],
+    "whyItWillGrow": "Why this builds an audience"
   },
   "quickWins": [
     {
-      "idea": "فكرة سريعة اليوم — مرتبطة بالصين",
-      "timeToFilm": "15 دقيقة|30 دقيقة|ساعة",
-      "hook": "الهوك",
-      "sourceEvent": "الخبر اللي ألهمها"
+      "idea": "Something you can film TODAY in China",
+      "timeToFilm": "15 min|30 min|1 hour",
+      "hook": "Opening hook",
+      "sourceEvent": "What inspired this"
     }
   ]
 }`
 
     const res = await openai.chat.completions.create({
       model: "gpt-4o",
-      max_tokens: 2500,
-      temperature: 0.85,
+      max_tokens: 2800,
+      temperature: 0.88,
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
@@ -231,7 +269,7 @@ JSON فقط (بدون markdown):
       sourcesFetched: successfulSources,
       fetchedAt: new Date().toISOString(),
       hasRealData,
-      nicheFilter: "Arab-China content only",
+      focus,
     }
 
     return NextResponse.json(parsed)

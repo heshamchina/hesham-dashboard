@@ -355,27 +355,27 @@ export default function InstagramSuite() {
           <div className="card p-4">
             <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
               <div>
-                <h2 className="font-bold text-gray-900">🔥 أفكار من أخبار حقيقية</h2>
-                <p className="text-xs text-gray-400 mt-0.5">يجيب أخبار الآن من BBC، SCMP، China Daily — ويحولها لأفكار فيديو</p>
+                <h2 className="font-bold text-gray-900">🔥 ما يحصل في الصين الآن</h2>
+                <p className="text-xs text-gray-400 mt-0.5">مدن، أماكن تتريند، شباب، أكل، أسواق، تطبيقات، معارض — كل شي قابل للتصوير</p>
               </div>
             </div>
 
             {/* Source badges */}
             <div className="flex flex-wrap gap-1 mb-3 mt-2">
-              {["BBC", "SCMP", "China Daily", "Global Times", "NYT"].map(s => (
+              {["Sixth Tone", "SCMP", "China Daily", "Global Times", "Google CN"].map(s => (
                 <span key={s} className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{s}</span>
               ))}
-              <span className="text-xs text-gray-400 px-1">← live RSS feeds</span>
+              <span className="text-xs text-gray-400 px-1">← live feeds</span>
             </div>
 
             <div className="flex flex-wrap gap-2 mb-4">
               {[
-                { id: "all", label: "🌐 كل شي" },
-                { id: "china", label: "🇨🇳 أخبار الصين" },
-                { id: "business", label: "💼 توريد وتجارة" },
-                { id: "travel", label: "✈️ سفر وتأشيرة" },
-                { id: "trending", label: "📱 عالمي" },
-                { id: "ramadan", label: "🌙 رمضان" },
+                { id: "all",      label: "🌐 كل شي" },
+                { id: "trending", label: "🔥 تريند الشباب" },
+                { id: "travel",   label: "📍 مدن وأماكن" },
+                { id: "china",    label: "🇨🇳 حياة يومية" },
+                { id: "business", label: "🛍 أسواق وتوريد" },
+                { id: "ramadan",  label: "🌙 حلال ورمضان" },
               ].map(f => (
                 <button key={f.id} onClick={() => setTrendingFocus(f.id)}
                   className={clsx("px-3 py-1.5 rounded-lg text-sm font-medium border transition-all",
