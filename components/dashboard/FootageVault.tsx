@@ -130,7 +130,7 @@ export default function FootageVault() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">🎬 Footage Vault</h2>
+          <h2 className="text-display">Footage Vault</h2>
           <p className="text-sm text-gray-400 mt-0.5">
             {footage.length} كليب مسجّل
             {unusedCount > 0 && <span className="text-red-500 font-semibold"> · {unusedCount} لم يُستخدم بعد</span>}
@@ -225,12 +225,13 @@ export default function FootageVault() {
       {/* Filters */}
       {footage.length > 0 && (
         <div className="flex gap-2 flex-wrap">
-          <div className="flex bg-gray-100 rounded-lg p-0.5 gap-0.5">
+          <div className="flex rounded-lg p-0.5 gap-0.5 border border-surface-border" style={{ backgroundColor: "#1A1A1A" }}>
             {(["all", "unused", "scripted", "posted"] as const).map(s => (
               <button key={s} onClick={() => setFilterStatus(s)}
                 className={clsx("px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
-                  filterStatus === s ? "bg-white shadow text-gray-900" : "text-gray-500"
-                )}>
+                  filterStatus === s ? "text-ink-primary" : "text-ink-muted"
+                )}
+                style={filterStatus === s ? { backgroundColor: "#2E2E2E" } : {}}>
                 {s === "all" ? `الكل (${footage.length})`
                   : `${STATUS_CONFIG[s].label} (${footage.filter(f => f.status === s).length})`}
               </button>

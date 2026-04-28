@@ -85,7 +85,7 @@ export default function FinanceHub() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Finance Hub</h2>
+          <h2 className="text-display">Finance Hub</h2>
           <p className="text-sm text-gray-400">Revenue · Expenses · Net Profit</p>
         </div>
         <button onClick={() => setShowForm(!showForm)} className="btn-primary">+ Add Expense</button>
@@ -164,12 +164,13 @@ export default function FinanceHub() {
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-gray-100 rounded-lg p-0.5 w-fit">
+      <div className="flex rounded-lg p-0.5 w-fit border border-surface-border" style={{ backgroundColor: "#1A1A1A" }}>
         {(["overview", "expenses", "revenue"] as const).map(t => (
           <button key={t} onClick={() => setActiveTab(t)}
             className={clsx("px-4 py-1.5 rounded-md text-sm font-medium transition-colors capitalize",
-              activeTab === t ? "bg-white shadow text-gray-900" : "text-gray-500"
-            )}>{t}</button>
+              activeTab === t ? "text-ink-primary" : "text-ink-muted hover:text-ink-secondary"
+            )}
+            style={activeTab === t ? { backgroundColor: "#2E2E2E" } : {}}>{t}</button>
         ))}
       </div>
 
@@ -212,7 +213,7 @@ export default function FinanceHub() {
                         <span>{cfg.emoji} {cfg.label}</span>
                         <span className="font-semibold">${amount.toLocaleString()}</span>
                       </div>
-                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#2A2A2A" }}>
                         <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: cfg.color }} />
                       </div>
                     </div>

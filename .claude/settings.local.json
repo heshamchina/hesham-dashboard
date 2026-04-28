@@ -9,7 +9,16 @@
       "WebFetch(domain:www.mediawiki.org)",
       "WebFetch(domain:wiki.openstreetmap.org)",
       "WebFetch(domain:nominatim.org)",
-      "Bash(curl -s \"https://r.jina.ai/https://www.instagram.com/anoodinchina/\" -H \"Accept: text/plain\")"
+      "Bash(curl -s \"https://r.jina.ai/https://www.instagram.com/anoodinchina/\" -H \"Accept: text/plain\")",
+      "Bash(npx next *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3004)",
+      "Bash(npx kill-port *)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(npx --yes kill-port 3007)",
+      "Bash(curl -s -X POST http://localhost:3007/api/meeting -H 'Content-Type: application/json' -d '{\"topic\":\"test\"}')",
+      "Bash(curl -s 'https://svuoltsrhzjaiguvtdqo.supabase.co/rest/v1/meeting_sessions?limit=1' -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2dW9sdHNyaHpqYWlndXZ0ZHFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NDM4OTksImV4cCI6MjA5MDAxOTg5OX0.AgHCLjpNOKjofpRc5o8FnUoVGts9oGfq8xPFyGNyKcc' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2dW9sdHNyaHpqYWlndXZ0ZHFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NDM4OTksImV4cCI6MjA5MDAxOTg5OX0.AgHCLjpNOKjofpRc5o8FnUoVGts9oGfq8xPFyGNyKcc')",
+      "Bash(curl -s --max-time 10 'https://svuoltsrhzjaiguvtdqo.supabase.co/rest/v1/meeting_sessions?limit=1' -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2dW9sdHNyaHpqYWlndXZ0ZHFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NDM4OTksImV4cCI6MjA5MDAxOTg5OX0.AgHCLjpNOKjofpRc5o8FnUoVGts9oGfq8xPFyGNyKcc' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2dW9sdHNyaHpqYWlndXZ0ZHFvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NDM4OTksImV4cCI6MjA5MDAxOTg5OX0.AgHCLjpNOKjofpRc5o8FnUoVGts9oGfq8xPFyGNyKcc')",
+      "Bash(node -e ' *)"
     ]
   }
 }

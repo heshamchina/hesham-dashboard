@@ -21,7 +21,7 @@ const thisMonday = () => {
   return new Date(d.setDate(diff)).toISOString().split("T")[0]
 }
 
-interface Store {
+export interface Store {
   deals: Deal[]
   addDeal: (d: Omit<Deal, "id" | "createdAt" | "updatedAt" | "logs">) => void
   updateDeal: (id: string, updates: Partial<Deal>) => void
