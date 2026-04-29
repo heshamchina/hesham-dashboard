@@ -1,11 +1,64 @@
 import { NextRequest, NextResponse } from "next/server"
 import OpenAI from "openai"
+import { supabase } from "@/lib/supabase"
+import { AGENT_MAP, type AgentId } from "@/lib/agents"
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
+type MemoryContext = {
+  type?: "general" | "client"
+  id?: string
+  label?: string
+}
+
+async function loadAgentMemory(agentId: AgentId, ctx: MemoryContext) {
+  const contextType = ctx.type || "general"
+  let query = supabase
+    .from("agent_memories")
+    .select("role, content, context_id")
+    .eq("agent_id", agentId)
+    .eq("context_type", contextType)
+    .order("created_at", { ascending: false })
+    .limit(8)
+
+  if (contextType === "client" && ctx.id) {
+    query = query.eq("context_id", ctx.id)
+  }
+
+  const { data } = await query
+  return (data ?? [])
+    .reverse()
+    .map((m: any) => ({ role: m.role, content: m.content }))
+}
+
+async function saveAgentMemory(
+  agentId: AgentId,
+  ctx: MemoryContext,
+  userContent: string,
+  assistantContent: string
+) {
+  const contextType = ctx.type || "general"
+  await supabase.from("agent_memories").insert([
+    {
+      agent_id: agentId,
+      context_type: contextType,
+      context_id: contextType === "client" ? (ctx.id || null) : null,
+      role: "user",
+      content: userContent,
+    },
+    {
+      agent_id: agentId,
+      context_type: contextType,
+      context_id: contextType === "client" ? (ctx.id || null) : null,
+      role: "assistant",
+      content: assistantContent,
+    },
+  ])
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { messages, context } = await req.json()
+    const { messages, context, agentId, memoryContext, clientContext } = await req.json()
 
     // Build rich context from dashboard data
     const ctx = context || {}
@@ -44,6 +97,15 @@ export async function POST(req: NextRequest) {
       })()
       return g.weekStart === monday
     })
+
+    const selectedAgent = agentId ? AGENT_MAP[agentId as AgentId] : null
+    const agentSystem = selectedAgent
+      ? `\n\n## Active Agent Persona\nYou are currently acting as ${selectedAgent.name} (${selectedAgent.role}).\nFollow this system profile:\n${selectedAgent.systemPrompt}`
+      : ""
+
+    const clientBlock = clientContext
+      ? `\n\n## Focus Client\nName: ${clientContext.name || "-"}\nContact: ${clientContext.contactInfo || "-"}\nIndustry: ${clientContext.industry || "-"}\nProducts wanted: ${(clientContext.productsWanted || []).join(", ") || "-"}\nAssigned manager: ${clientContext.managerName || "-"} (${clientContext.managerField || "-"})\nStatus: ${clientContext.status || "-"}`
+      : ""
 
     const systemPrompt = `You are Hesham's personal AI assistant — built into his private command center dashboard.
 
@@ -94,7 +156,11 @@ You are a trusted, direct advisor who knows everything about Hesham's business a
 - Use English by default but switch to Arabic if he does
 
 ## Tone
-Direct. Practical. Warm but no fluff. Like a smart COO who also understands content creation.`
+Direct. Practical. Warm but no fluff. Like a smart COO who also understands content creation.${agentSystem}${clientBlock}`
+
+    const memoryMessages = selectedAgent
+      ? await loadAgentMemory(selectedAgent.id, memoryContext || {})
+      : []
 
     const res = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -102,13 +168,27 @@ Direct. Practical. Warm but no fluff. Like a smart COO who also understands cont
       temperature: 0.8,
       messages: [
         { role: "system", content: systemPrompt },
+        ...memoryMessages,
         ...messages
       ]
     })
 
+    const reply = res.choices[0].message.content || ""
+
+    if (selectedAgent) {
+      const lastUser = [...(messages || [])]
+        .reverse()
+        .find((m: any) => m.role === "user" && typeof m.content === "string")
+
+      if (lastUser?.content && reply) {
+        await saveAgentMemory(selectedAgent.id, memoryContext || {}, lastUser.content, reply)
+      }
+    }
+
     return NextResponse.json({
-      reply: res.choices[0].message.content,
+      reply,
       usage: res.usage,
+      memoryUsed: memoryMessages.length,
     })
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Error"

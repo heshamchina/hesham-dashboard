@@ -10,7 +10,8 @@ import type {
   WeeklyGoal, StreakData, AffiliateLink,
   RevenueSettings, Contact, ContactNote,
   JournalEntry, Expense, ExpenseCategory,
-  FootageClip, FootageTag, FootageStatus
+  FootageClip, FootageTag, FootageStatus,
+  ClientRecord, ClientDiscussionMessage
 } from "@/types"
 
 const today = () => new Date().toISOString().split("T")[0]
@@ -91,6 +92,14 @@ export interface Store {
   addFootage: (f: Omit<FootageClip, "id" | "createdAt">) => void
   updateFootage: (id: string, updates: Partial<FootageClip>) => void
   deleteFootage: (id: string) => void
+
+  clientRecords: ClientRecord[]
+  addClientRecord: (c: Omit<ClientRecord, "id" | "createdAt" | "updatedAt" | "discussion">) => void
+  updateClientRecord: (id: string, updates: Partial<ClientRecord>) => void
+  deleteClientRecord: (id: string) => void
+  addClientDiscussion: (id: string, msg: Omit<ClientDiscussionMessage, "id" | "date">) => void
+  addClientProductPhoto: (id: string, photo: string) => void
+  removeClientProductPhoto: (id: string, index: number) => void
 }
 
 export const useStore = create<Store>()(
@@ -379,6 +388,65 @@ export const useStore = create<Store>()(
       deleteFootage: (id) => {
         set(s => ({ footage: s.footage.filter(f => f.id !== id) }))
         db.footage.delete(id)
+      },
+
+      // ── Client Agent Hub ──────────────────────────
+      clientRecords: [],
+      addClientRecord: (c) => {
+        const now = new Date().toISOString()
+        const newClient: ClientRecord = {
+          ...c,
+          id: uuid(),
+          discussion: [],
+          createdAt: now,
+          updatedAt: now,
+        }
+        set(s => ({ clientRecords: [newClient, ...s.clientRecords] }))
+        db.clientRecords.upsert(newClient)
+      },
+      updateClientRecord: (id, updates) => {
+        set(s => ({
+          clientRecords: s.clientRecords.map(c => c.id === id ? { ...c, ...updates, updatedAt: new Date().toISOString() } : c)
+        }))
+        const updated = get().clientRecords.find(c => c.id === id)
+        if (updated) debounced(`client-${id}`, () => db.clientRecords.upsert(updated))
+      },
+      deleteClientRecord: (id) => {
+        set(s => ({ clientRecords: s.clientRecords.filter(c => c.id !== id) }))
+        db.clientRecords.delete(id)
+      },
+      addClientDiscussion: (id, msg) => {
+        set(s => ({
+          clientRecords: s.clientRecords.map(c => c.id === id ? {
+            ...c,
+            discussion: [...c.discussion, { ...msg, id: uuid(), date: new Date().toISOString() }],
+            updatedAt: new Date().toISOString(),
+          } : c)
+        }))
+        const updated = get().clientRecords.find(c => c.id === id)
+        if (updated) db.clientRecords.upsert(updated)
+      },
+      addClientProductPhoto: (id, photo) => {
+        set(s => ({
+          clientRecords: s.clientRecords.map(c => c.id === id ? {
+            ...c,
+            productPhotos: [photo, ...c.productPhotos],
+            updatedAt: new Date().toISOString(),
+          } : c)
+        }))
+        const updated = get().clientRecords.find(c => c.id === id)
+        if (updated) db.clientRecords.upsert(updated)
+      },
+      removeClientProductPhoto: (id, index) => {
+        set(s => ({
+          clientRecords: s.clientRecords.map(c => c.id === id ? {
+            ...c,
+            productPhotos: c.productPhotos.filter((_, i) => i !== index),
+            updatedAt: new Date().toISOString(),
+          } : c)
+        }))
+        const updated = get().clientRecords.find(c => c.id === id)
+        if (updated) db.clientRecords.upsert(updated)
       },
     }),
     { name: "heshamchina-dashboard-v2" }

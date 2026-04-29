@@ -25,9 +25,14 @@ Your private command center. One URL, every morning, everything in one place.
 - Your active projects with health indicators, progress sliders, next actions
 - **Vercel deployments** — live view of all your deployed apps (requires VERCEL_TOKEN)
 
-### Links Tab
-- Trip.com affiliate links organized by category (hotel, flight, train, attraction)
-- One-click copy
+### Agents Tab
+- Individual AI agents + meeting room workflows
+- Task history from Supabase
+- Client Agent Desk: client rows, status, discussion log, and product photo gallery
+
+### Settings Tab
+- One-click local -> Supabase migration helpers
+- Environment and integration checks
 
 ---
 
@@ -80,23 +85,28 @@ Add all env vars in Vercel → Project Settings → Environment Variables.
 ---
 
 ## Data Storage
-Everything is stored in your browser's localStorage via Zustand persist.
-- No database needed
-- Data stays on your device
-- Clear browser data = fresh start (export important data manually if needed)
+The app uses a hybrid model:
+- Zustand persist for fast local UX
+- Supabase for cross-device sync and long-term storage
+- Supabase Storage for media (thumbnails and product photos)
+
+If Supabase is temporarily unreachable, the dashboard continues from local persisted state.
 
 ---
 
 ## File Structure
 ```
 app/
-  page.tsx                    → Main dashboard (Home, Projects, Links tabs)
+  page.tsx                    → Main dashboard (Home, Agents, Instagram, Projects, Journal, Settings)
   layout.tsx + globals.css
   api/
     morning-brief/            → GPT-4o synthesizes all your data into a brief
     generate-script/          → Script generator in your tone
     analyze-competitor/       → Competitor content analysis
     generate-image/           → DALL-E 3 image generation
+    agents/                   → Individual agent endpoints
+    meeting/                  → Multi-agent meeting orchestration
+    scrape/                   → Daily scraping + ingestion pipeline
     vercel-projects/          → Fetches your Vercel deployments
     weather/                  → Open-Meteo Beijing weather (no key needed)
 

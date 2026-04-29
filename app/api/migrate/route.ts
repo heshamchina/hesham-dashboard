@@ -163,6 +163,27 @@ export async function POST(req: NextRequest) {
       ))
     }
 
+    // Client records
+    if (state.clientRecords?.length) {
+      await safe("client_records", () => supabase.from("client_records").upsert(
+        state.clientRecords.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          contact_info: c.contactInfo,
+          whatsapp: c.whatsapp ?? null,
+          industry: c.industry ?? "",
+          products_wanted: c.productsWanted ?? [],
+          product_photos: (c.productPhotos ?? []).filter((url: string) => !url?.startsWith("data:")),
+          manager_name: c.managerName,
+          manager_field: c.managerField,
+          status: c.status,
+          discussion: c.discussion ?? [],
+          created_at: c.createdAt,
+          updated_at: c.updatedAt,
+        }))
+      ))
+    }
+
     return NextResponse.json({
       ok: true,
       migrated: {
@@ -176,6 +197,7 @@ export async function POST(req: NextRequest) {
         captures: state.captures?.length ?? 0,
         weeklyGoals: state.weeklyGoals?.length ?? 0,
         affiliateLinks: state.affiliateLinks?.length ?? 0,
+        clientRecords: state.clientRecords?.length ?? 0,
       },
       errors: errors.length > 0 ? errors : undefined,
     })

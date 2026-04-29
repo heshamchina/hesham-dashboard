@@ -147,3 +147,32 @@ CREATE TABLE footage (
   linked_idea_id  TEXT,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE client_records (
+  id              TEXT PRIMARY KEY,
+  name            TEXT NOT NULL,
+  contact_info    TEXT NOT NULL,
+  whatsapp        TEXT,
+  industry        TEXT NOT NULL DEFAULT '',
+  products_wanted JSONB NOT NULL DEFAULT '[]',
+  product_photos  JSONB NOT NULL DEFAULT '[]',
+  manager_name    TEXT NOT NULL,
+  manager_field   TEXT NOT NULL,
+  status          TEXT NOT NULL CHECK (status IN ('active','pending','closed')),
+  discussion      JSONB NOT NULL DEFAULT '[]',
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE agent_memories (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent_id      TEXT NOT NULL,
+  context_type  TEXT NOT NULL DEFAULT 'general' CHECK (context_type IN ('general','client')),
+  context_id    TEXT,
+  role          TEXT NOT NULL CHECK (role IN ('user','assistant')),
+  content       TEXT NOT NULL,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX agent_memories_agent_context_idx
+  ON agent_memories (agent_id, context_type, context_id, created_at DESC);

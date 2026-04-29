@@ -198,3 +198,29 @@ export interface Expense {
   dealId?: string        // optional link to deal
   createdAt: string
 }
+
+// ─── CLIENT AGENT HUB ─────────────────────────────────
+export type ClientStatus = "active" | "pending" | "closed"
+
+export interface ClientDiscussionMessage {
+  id: string
+  date: string
+  author: "me" | "agent"
+  text: string
+}
+
+export interface ClientRecord {
+  id: string
+  name: string
+  contactInfo: string
+  whatsapp?: string
+  industry: string
+  productsWanted: string[]
+  productPhotos: string[]
+  managerName: string
+  managerField: string
+  status: ClientStatus
+  discussion: ClientDiscussionMessage[]
+  createdAt: string
+  updatedAt: string
+}

@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from "react"
 import { useStore } from "@/lib/store"
 import { ARABIC_QUOTES, CHENGYU, SERIES_LABELS, VIBE_LABELS } from "@/lib/constants"
 import { supabase } from "@/lib/supabase"
+import { buildDashboardReminders, type DashboardReminder } from "@/lib/reminders"
+import OperatingView from "@/components/dashboard/OperatingView"
 import clsx from "clsx"
 
 // ── Daily rotation ─────────────────────────────────────────────
@@ -419,6 +421,36 @@ export default function CompanyHQ({ onNavigate, weather }: Props) {
 
   const activeDef = AGENT_DEFS.find(a => a.id === activePanel) ?? null
 
+  const reminders = buildDashboardReminders({
+    deals: store.deals,
+    revenueSettings: store.revenueSettings,
+    clients: store.clientRecords,
+    ideas: store.contentIdeas,
+    projects: store.projects,
+    captures: store.captures,
+    footage: store.footage,
+  })
+
+  function reminderToChecklist(reminder: DashboardReminder) {
+    const prefix = reminder.priority === "high" ? "[HIGH]" : reminder.priority === "medium" ? "[MED]" : "[LOW]"
+    return `${prefix} ${reminder.title}`
+  }
+
+  function executeReminder(reminder: DashboardReminder) {
+    const taskText = reminderToChecklist(reminder)
+    const exists = store.dailyFocus?.checklist.some(i => i.text === taskText)
+    if (!exists) store.addChecklistItem(taskText)
+    onNavigate(reminder.tab)
+  }
+
+  function createTodayPlanFromReminders(topReminders: DashboardReminder[]) {
+    topReminders.forEach(r => {
+      const taskText = reminderToChecklist(r)
+      const exists = store.dailyFocus?.checklist.some(i => i.text === taskText)
+      if (!exists) store.addChecklistItem(taskText)
+    })
+  }
+
   return (
     <div className="space-y-8 page-content">
 
@@ -473,6 +505,14 @@ export default function CompanyHQ({ onNavigate, weather }: Props) {
           sub="clips ready"
         />
       </div>
+
+      {/* ── Daily Operating View ─────────────────────────── */}
+      <OperatingView
+        reminders={reminders}
+        onNavigate={onNavigate}
+        onExecute={executeReminder}
+        onCreatePlan={createTodayPlanFromReminders}
+      />
 
       {/* ── Your Team ─────────────────────────────────────── */}
       <div>

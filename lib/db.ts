@@ -2,7 +2,7 @@ import { supabase } from "./supabase"
 import type {
   Deal, Project, FollowerEntry, ContentIdea, DailyFocus,
   CaptureItem, WeeklyGoal, StreakData, AffiliateLink, RevenueSettings,
-  Contact, JournalEntry, Expense, FootageClip
+  Contact, JournalEntry, Expense, FootageClip, ClientRecord
 } from "@/types"
 
 // ── debounce helper ────────────────────────────────────────────────────────
@@ -104,6 +104,38 @@ const fromFootage = (f: FootageClip) => ({
   notes: f.notes ?? null, thumbnail_url: f.thumbnail?.startsWith("data:") ? null : (f.thumbnail ?? null),
   film_date: f.filmDate ?? null, linked_idea_id: f.linkedIdeaId ?? null,
   created_at: f.createdAt,
+})
+
+const toClientRecord = (r: any): ClientRecord => ({
+  id: r.id,
+  name: r.name,
+  contactInfo: r.contact_info,
+  whatsapp: r.whatsapp ?? undefined,
+  industry: r.industry,
+  productsWanted: r.products_wanted ?? [],
+  productPhotos: r.product_photos ?? [],
+  managerName: r.manager_name,
+  managerField: r.manager_field,
+  status: r.status,
+  discussion: r.discussion ?? [],
+  createdAt: r.created_at,
+  updatedAt: r.updated_at,
+})
+
+const fromClientRecord = (c: ClientRecord) => ({
+  id: c.id,
+  name: c.name,
+  contact_info: c.contactInfo,
+  whatsapp: c.whatsapp ?? null,
+  industry: c.industry,
+  products_wanted: c.productsWanted,
+  product_photos: c.productPhotos,
+  manager_name: c.managerName,
+  manager_field: c.managerField,
+  status: c.status,
+  discussion: c.discussion,
+  created_at: c.createdAt,
+  updated_at: c.updatedAt,
 })
 
 // ── db object ──────────────────────────────────────────────────────────────
@@ -294,6 +326,27 @@ export const db = {
       const { error } = await supabase.storage.from("thumbnails").upload(path, file, { upsert: true })
       if (error) throw error
       const { data } = supabase.storage.from("thumbnails").getPublicUrl(path)
+      return data.publicUrl
+    },
+  },
+
+  clientRecords: {
+    async fetchAll(): Promise<ClientRecord[]> {
+      const { data } = await supabase.from("client_records").select("*").order("updated_at", { ascending: false })
+      return (data ?? []).map(toClientRecord)
+    },
+    async upsert(c: ClientRecord) {
+      await supabase.from("client_records").upsert(fromClientRecord(c))
+    },
+    async delete(id: string) {
+      await supabase.from("client_records").delete().eq("id", id)
+    },
+    async uploadProductPhoto(file: File, clientId: string): Promise<string> {
+      const ext = file.name.split(".").pop() || "jpg"
+      const path = `${clientId}/${crypto.randomUUID()}.${ext}`
+      const { error } = await supabase.storage.from("client-products").upload(path, file, { upsert: false })
+      if (error) throw error
+      const { data } = supabase.storage.from("client-products").getPublicUrl(path)
       return data.publicUrl
     },
   },

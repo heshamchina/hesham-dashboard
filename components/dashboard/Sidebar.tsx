@@ -11,6 +11,7 @@ const NAV_MAIN = [
   { id: "instagram", label: "Instagram",  icon: InstagramIcon },
   { id: "projects",  label: "Projects",   icon: ProjectsIcon },
   { id: "journal",   label: "Journal",    icon: JournalIcon },
+  { id: "settings",  label: "Settings",   icon: SettingsIcon },
 ]
 
 interface Props {
@@ -81,19 +82,6 @@ export default function Sidebar({ activeTab, onTabChange }: Props) {
             )}
           </button>
 
-          {/* Settings */}
-          <button
-            onClick={() => onTabChange("settings")}
-            data-tooltip={!expanded ? "Settings" : undefined}
-            className={clsx("nav-item w-full", activeTab === "settings" && "active")}
-          >
-            <span className="nav-icon">
-              <SettingsIcon active={activeTab === "settings"} />
-            </span>
-            {expanded && (
-              <span className="nav-label animate-fade-in">Settings</span>
-            )}
-          </button>
         </div>
       </aside>
 

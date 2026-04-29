@@ -18,7 +18,7 @@ export function useHydrate() {
           deals, projects, followerLog, contentIdeas,
           captures, weeklyGoals, affiliateLinks, contacts,
           journalEntries, expenses, footage,
-          streaks, revenueSettings, dailyFocus,
+          streaks, revenueSettings, dailyFocus, clientRecords,
         ] = await Promise.all([
           db.deals.fetchAll(),
           db.projects.fetchAll(),
@@ -34,6 +34,7 @@ export function useHydrate() {
           db.streaks.fetch(),
           db.revenueSettings.fetch(),
           db.dailyFocus.fetchToday(today),
+          db.clientRecords.fetchAll(),
         ])
 
         const current = useStore.getState()
@@ -50,6 +51,7 @@ export function useHydrate() {
           journalEntries,
           expenses,
           footage,
+          clientRecords,
           streaks:         streaks         ?? current.streaks,
           revenueSettings: revenueSettings ?? current.revenueSettings,
           dailyFocus:      dailyFocus      ?? current.dailyFocus,

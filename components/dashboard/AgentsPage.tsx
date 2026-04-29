@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react"
 import { useStore } from "@/lib/store"
 import { supabase } from "@/lib/supabase"
 import { AGENTS } from "@/lib/agents"
+import ClientAgentsHub from "@/components/dashboard/ClientAgentsHub"
 import clsx from "clsx"
 
 // ── Types ──────────────────────────────────────────────────────
@@ -476,6 +477,9 @@ export default function AgentsPage({ onNavigate }: Props) {
           </button>
         ))}
       </div>
+
+      {/* Client agents workflow */}
+      <ClientAgentsHub />
 
       {/* Task history */}
       <div className="space-y-3">
