@@ -117,6 +117,16 @@ export default function InstagramSuite() {
   const [newTarget, setNewTarget] = useState({ type: "account" as "account" | "hashtag", target: "", label: "" })
   const [showAddTarget, setShowAddTarget] = useState(false)
 
+  // ── Reel Intelligence state ──────────────────────────────────
+  const [reelHandle, setReelHandle] = useState("")
+  const [reelResult, setReelResult] = useState<any>(null)
+  const [reelLoading, setReelLoading] = useState(false)
+  const [reelTab, setReelTab] = useState<"posts" | "analysis">("posts")
+  const [hashtagInput, setHashtagInput] = useState("")
+  const [hashtagResult, setHashtagResult] = useState<any>(null)
+  const [hashtagLoading, setHashtagLoading] = useState(false)
+  const [competitorMode, setCompetitorMode] = useState<"classic" | "reel-intel" | "hashtag">("classic")
+
   const filteredIdeas = store.contentIdeas.filter(i => {
     if (filterSeries !== "all" && i.series !== filterSeries) return false
     if (filterStatus !== "all" && i.status !== filterStatus) return false
@@ -124,6 +134,37 @@ export default function InstagramSuite() {
   })
 
   // ── API helpers ──────────────────────────────────────────────
+
+  async function analyzeReels() {
+    if (!reelHandle.trim()) return
+    setReelLoading(true)
+    setReelResult(null)
+    try {
+      const res = await fetch("/api/analyze-reels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ handle: reelHandle.replace("@", ""), type: "account" })
+      })
+      setReelResult(await res.json())
+      setReelTab("posts")
+    } catch {}
+    setReelLoading(false)
+  }
+
+  async function searchHashtag() {
+    if (!hashtagInput.trim()) return
+    setHashtagLoading(true)
+    setHashtagResult(null)
+    try {
+      const res = await fetch("/api/analyze-reels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hashtag: hashtagInput.replace("#", ""), type: "hashtag" })
+      })
+      setHashtagResult(await res.json())
+    } catch {}
+    setHashtagLoading(false)
+  }
 
   async function repurposeContent() {
     if (!repurposeInput.trim()) return
@@ -943,6 +984,374 @@ export default function InstagramSuite() {
       {/* ════════════════════════════════════════════════ */}
       {tab === "competitors" && (
         <div className="space-y-4">
+
+          {/* ── Mode switcher ──── */}
+          <div className="flex gap-1 p-0.5 rounded-xl" style={{ background: "#181818", border: "1px solid #252525" }}>
+            {[
+              { id: "reel-intel", label: "🎥 Reel Intel", desc: "Real post data" },
+              { id: "hashtag",    label: "# Hashtags",   desc: "What's trending" },
+              { id: "classic",   label: "🔍 Classic",    desc: "AI analysis" },
+            ].map(m => (
+              <button key={m.id} onClick={() => setCompetitorMode(m.id as any)}
+                className="flex-1 flex flex-col items-center py-2 rounded-lg text-xs font-medium transition-all"
+                style={competitorMode === m.id
+                  ? { background: "#252525", color: "#F0F0F0" }
+                  : { color: "#606060" }}>
+                {m.label}
+                <span className="text-[10px] mt-0.5" style={{ color: competitorMode === m.id ? "#808080" : "#404040" }}>{m.desc}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* ════════════════════════════════════════════ */}
+          {/* REEL INTELLIGENCE MODE                       */}
+          {/* ════════════════════════════════════════════ */}
+          {competitorMode === "reel-intel" && (
+            <div className="space-y-4">
+              <div className="rounded-2xl p-5 space-y-4" style={{ background: "#1A1A1A", border: "1px solid #252525" }}>
+                <div>
+                  <h2 className="font-bold text-ink-primary">🎥 Reel Intelligence</h2>
+                  <p className="text-xs text-ink-muted mt-0.5">بيانات حقيقية من أي حساب — مشاهدات، هوكس، أنماط، فجوات</p>
+                </div>
+                <div className="flex gap-2">
+                  <input className="input flex-1 text-sm" placeholder="@anoodinchina"
+                    value={reelHandle} onChange={e => { setReelHandle(e.target.value); setReelResult(null) }} />
+                  <a href={`https://www.instagram.com/${reelHandle.replace("@", "")}/`}
+                    target="_blank" rel="noopener"
+                    className={clsx("px-3 py-2 rounded-lg text-xs font-medium shrink-0", !reelHandle.trim() && "opacity-40 pointer-events-none")}
+                    style={{ background: "#242424", color: "#A0A0A0", border: "1px solid #2E2E2E" }}>
+                    ↗
+                  </a>
+                </div>
+                <button onClick={analyzeReels} disabled={reelLoading || !reelHandle.trim()}
+                  className="w-full py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-40"
+                  style={{ background: "#A51C1C", color: "#fff" }}>
+                  {reelLoading
+                    ? <span className="flex items-center justify-center gap-2">
+                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>يجلب البيانات... (30-90 ثانية)</span>
+                      </span>
+                    : "🎥 اسحب الريلز الحقيقية"}
+                </button>
+                {reelLoading && (
+                  <p className="text-xs text-center text-ink-muted">Apify يسحب المنشورات من إنستغرام — انتظر</p>
+                )}
+              </div>
+
+              {!reelResult && !reelLoading && (
+                <div className="text-center py-12 text-ink-muted">
+                  <p className="text-4xl mb-3">🎥</p>
+                  <p className="font-semibold text-ink-secondary">بيانات حقيقية لا تخمينات</p>
+                  <p className="text-sm mt-1">Apify يسحب مشاهدات، إعجابات، هوكس فعلية من أي حساب عام</p>
+                </div>
+              )}
+
+              {reelResult?.error && (
+                <div className="rounded-xl px-4 py-3" style={{ background: "#251D08", border: "1px solid #4A3A10" }}>
+                  <p className="text-sm font-medium" style={{ color: "#D4A017" }}>⚠️ {reelResult.error}</p>
+                </div>
+              )}
+
+              {reelResult?.ok && (
+                <div className="space-y-3">
+                  {/* Summary bar */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { label: "منشورات محللة", value: reelResult.count },
+                      { label: "أعلى مشاهدات", value: reelResult.posts?.[0]?.views?.toLocaleString() ?? "—" },
+                      { label: "متوسط مشاهدات", value: reelResult.analysis?.accountSnapshot?.avgViews?.toLocaleString() ?? "—" },
+                    ].map((s, i) => (
+                      <div key={i} className="rounded-xl p-3 text-center" style={{ background: "#1A1A1A", border: "1px solid #252525" }}>
+                        <p className="text-xs text-ink-muted mb-1">{s.label}</p>
+                        <p className="font-bold text-sm" style={{ color: i === 1 ? "#D4A017" : "#F0F0F0" }}>{s.value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Inner tabs */}
+                  <div className="flex rounded-xl p-0.5" style={{ background: "#181818", border: "1px solid #252525" }}>
+                    {[
+                      { id: "posts" as const, label: "📋 الريلز" },
+                      { id: "analysis" as const, label: "🧠 التحليل" },
+                    ].map(t => (
+                      <button key={t.id} onClick={() => setReelTab(t.id)}
+                        className="flex-1 py-2 rounded-lg text-xs font-medium transition-colors"
+                        style={reelTab === t.id ? { background: "#2E2E2E", color: "#F0F0F0" } : { color: "#606060" }}>
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* POSTS TAB */}
+                  {reelTab === "posts" && (
+                    <div className="space-y-2">
+                      {reelResult.posts?.slice(0, 20).map((post: any, i: number) => (
+                        <div key={post.shortCode || i} className="rounded-xl p-3" style={{ background: "#1A1A1A", border: "1px solid #252525" }}>
+                          <div className="flex items-start gap-3">
+                            <span className="text-lg font-black shrink-0 w-6 text-center"
+                              style={{ color: i === 0 ? "#D4A017" : i === 1 ? "#9CA3AF" : i === 2 ? "#CD7C2F" : "#3A3A3A" }}>
+                              {i + 1}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-3 mb-1">
+                                <span className="text-xs font-bold" style={{ color: "#4ADE80" }}>
+                                  👁 {post.views ? post.views.toLocaleString() : "—"}
+                                </span>
+                                <span className="text-xs text-ink-muted">❤️ {post.likes ? post.likes.toLocaleString() : "—"}</span>
+                                <span className="text-xs text-ink-muted">
+                                  {post.timestamp ? new Date(post.timestamp).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : ""}
+                                </span>
+                              </div>
+                              {post.hook && (
+                                <p className="text-sm text-ink-primary leading-snug" dir="auto">"{post.hook}"</p>
+                              )}
+                              {post.hashtags?.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-1.5">
+                                  {post.hashtags.slice(0, 5).map((h: string, j: number) => (
+                                    <span key={j} className="text-[10px] px-1.5 py-0.5 rounded-full"
+                                      style={{ background: "#2E2E2E", color: "#606060" }}>#{h}</span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex flex-col gap-1 shrink-0">
+                              <a href={post.url} target="_blank" rel="noopener"
+                                className="text-xs px-2 py-1 rounded-lg transition-colors"
+                                style={{ background: "#242424", color: "#A0A0A0" }}>↗</a>
+                              <button
+                                onClick={() => {
+                                  setScriptForm(f => ({ ...f, topic: post.hook || "" }))
+                                  setTab("content")
+                                  setContentTab("script")
+                                }}
+                                className="text-xs px-2 py-1 rounded-lg font-medium"
+                                style={{ background: "#3D0A0A", color: "#FF8080" }}>✍️</button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* ANALYSIS TAB */}
+                  {reelTab === "analysis" && reelResult.analysis && (
+                    <div className="space-y-3">
+                      {/* Hook formula */}
+                      {reelResult.analysis.hookPatterns && (
+                        <div className="rounded-2xl p-4 space-y-3" style={{ background: "#1A1A1A", border: "1px solid #252525" }}>
+                          <p className="text-xs font-bold uppercase tracking-wide text-ink-muted">⚡ نمط الهوك الفائز</p>
+                          <div className="rounded-xl px-4 py-3" style={{ background: "#3D0A0A", border: "1px solid #5A1414" }}>
+                            <p className="text-xs font-semibold mb-1" style={{ color: "#FF8080" }}>الفورمولا</p>
+                            <p className="text-sm font-medium text-ink-primary" dir="auto">
+                              {reelResult.analysis.hookPatterns.hookFormula}
+                            </p>
+                          </div>
+                          <div className="rounded-xl px-3 py-2.5" style={{ background: "#0D2016", border: "1px solid #1A4A2E" }}>
+                            <p className="text-xs font-semibold mb-1" style={{ color: "#4ADE80" }}>أفضل هوك</p>
+                            <p className="text-sm text-ink-primary" dir="auto">"{reelResult.analysis.hookPatterns.bestHook}"</p>
+                          </div>
+                          {reelResult.analysis.hookPatterns.mostUsedFormats?.length > 0 && (
+                            <div className="space-y-1">
+                              <p className="text-xs text-ink-muted">أكثر الصيغ استخداماً:</p>
+                              {reelResult.analysis.hookPatterns.mostUsedFormats.map((f: string, i: number) => (
+                                <p key={i} className="text-xs text-ink-secondary" dir="rtl">· {f}</p>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Top topics */}
+                      {reelResult.analysis.topTopics?.length > 0 && (
+                        <div className="rounded-2xl p-4 space-y-2" style={{ background: "#1A1A1A", border: "1px solid #252525" }}>
+                          <p className="text-xs font-bold uppercase tracking-wide text-ink-muted">🏆 المواضيع الأكثر مشاهدة</p>
+                          {reelResult.analysis.topTopics.map((t: any, i: number) => (
+                            <div key={i} className="rounded-xl p-3" style={{ background: "#242424" }}>
+                              <div className="flex items-center justify-between mb-1">
+                                <p className="font-semibold text-sm text-ink-primary" dir="rtl">{t.topic}</p>
+                                {t.avgViews > 0 && (
+                                  <span className="text-xs font-bold" style={{ color: "#4ADE80" }}>
+                                    {t.avgViews.toLocaleString()} avg
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-ink-muted" dir="rtl">{t.why}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Content gaps */}
+                      {reelResult.analysis.contentGaps?.length > 0 && (
+                        <div className="rounded-2xl p-4 space-y-2" style={{ background: "#1A1A1A", border: "1px solid #252525" }}>
+                          <p className="text-xs font-bold uppercase tracking-wide text-ink-muted">🎯 فجوات تقدر تملأها</p>
+                          {reelResult.analysis.contentGaps.map((g: any, i: number) => (
+                            <div key={i} className="rounded-xl p-3" style={{ background: "#251D08", border: "1px solid #4A3A10" }}>
+                              <p className="font-semibold text-sm text-ink-primary mb-1" dir="rtl">{g.gap}</p>
+                              <p className="text-xs" style={{ color: "#D4A017" }} dir="rtl">💡 {g.opportunity}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Stealable ideas */}
+                      {reelResult.analysis.stealableIdeas?.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-xs font-bold uppercase tracking-wide text-ink-muted">💡 أفكار تقدر تسرقها وتحسّنها</p>
+                          {reelResult.analysis.stealableIdeas.map((idea: any, i: number) => (
+                            <div key={i} className="rounded-2xl p-4 space-y-2" style={{ background: "#1A1A1A", border: "1px solid #252525" }}>
+                              <p className="text-xs text-ink-muted" dir="rtl">الإلهام: {idea.inspiration}</p>
+                              <div className="rounded-lg px-3 py-2" style={{ background: "#3D0A0A" }}>
+                                <p className="text-xs font-semibold mb-0.5" style={{ color: "#FF8080" }}>هوك Hesham</p>
+                                <p className="text-sm font-medium text-ink-primary" dir="rtl">{idea.hook}</p>
+                              </div>
+                              <p className="text-xs text-ink-muted" dir="rtl">🏆 {idea.heshamVersion}</p>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => store.addIdea({
+                                    series: idea.series || "other",
+                                    vibe: "viral", status: "idea",
+                                    hook: idea.hook,
+                                    script: idea.heshamVersion || "",
+                                    notes: `مسروقة من @${reelResult.handle} | الإلهام: ${idea.inspiration}`
+                                  })}
+                                  className="flex-1 py-2 rounded-lg text-xs font-bold"
+                                  style={{ background: "#A51C1C", color: "#fff" }}>
+                                  + حفظ في البايبلاين
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setScriptForm(f => ({ ...f, topic: idea.hook, series: idea.series || "other", vibe: "viral" }))
+                                    setTab("content")
+                                    setContentTab("script")
+                                  }}
+                                  className="px-3 py-2 rounded-lg text-xs font-medium"
+                                  style={{ background: "#242424", color: "#A0A0A0", border: "1px solid #2E2E2E" }}>
+                                  ✍️ سكريبت
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Strategic summary */}
+                      {reelResult.analysis.strategicSummary && (
+                        <div className="rounded-2xl p-4" style={{ background: "#251D08", border: "1px solid #D4A01744" }}>
+                          <p className="text-xs font-bold uppercase mb-1" style={{ color: "#D4A017" }}>🧠 الخلاصة الاستراتيجية</p>
+                          <p className="text-sm font-medium text-ink-primary" dir="rtl">{reelResult.analysis.strategicSummary}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ════════════════════════════════════════════ */}
+          {/* HASHTAG EXPLORER MODE                        */}
+          {/* ════════════════════════════════════════════ */}
+          {competitorMode === "hashtag" && (
+            <div className="space-y-4">
+              <div className="rounded-2xl p-5 space-y-4" style={{ background: "#1A1A1A", border: "1px solid #252525" }}>
+                <div>
+                  <h2 className="font-bold text-ink-primary"># مستكشف الهاشتاقات</h2>
+                  <p className="text-xs text-ink-muted mt-0.5">شوف أكثر المنشورات مشاهدة في أي هاشتاق الآن</p>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {["الصين", "china", "chinawithme", "arabsinchina", "heshaminchina", "beijing", "guangzhou"].map(tag => (
+                    <button key={tag} onClick={() => setHashtagInput(tag)}
+                      className="px-2.5 py-1 rounded-lg text-xs font-medium transition-all"
+                      style={hashtagInput === tag
+                        ? { background: "#A51C1C", color: "#fff" }
+                        : { background: "#242424", color: "#808080", border: "1px solid #2E2E2E" }}>
+                      #{tag}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input className="input flex-1 text-sm" placeholder="#الصين أو chinawithme"
+                    value={hashtagInput}
+                    onChange={e => { setHashtagInput(e.target.value.replace(/^#/, "")); setHashtagResult(null) }} />
+                  <button onClick={searchHashtag} disabled={hashtagLoading || !hashtagInput.trim()}
+                    className="px-4 py-2 rounded-xl text-sm font-bold transition-all disabled:opacity-40"
+                    style={{ background: "#A51C1C", color: "#fff" }}>
+                    {hashtagLoading
+                      ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin block" />
+                      : "بحث"}
+                  </button>
+                </div>
+                {hashtagLoading && (
+                  <p className="text-xs text-center text-ink-muted">Apify يبحث في إنستغرام... (30-60 ثانية)</p>
+                )}
+              </div>
+
+              {hashtagResult?.error && (
+                <div className="rounded-xl px-4 py-3" style={{ background: "#251D08", border: "1px solid #4A3A10" }}>
+                  <p className="text-sm" style={{ color: "#D4A017" }}>⚠️ {hashtagResult.error}</p>
+                </div>
+              )}
+
+              {hashtagResult?.ok && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <h3 className="font-bold text-ink-primary">#{hashtagResult.hashtag?.replace("#", "")}</h3>
+                    <span className="text-xs text-ink-muted">{hashtagResult.count} منشور • متوسط {hashtagResult.avgViews?.toLocaleString()} مشاهدة</span>
+                  </div>
+                  <p className="text-xs text-ink-muted">مرتبة حسب المشاهدات ↓</p>
+                  <div className="space-y-2">
+                    {hashtagResult.posts?.map((post: any, i: number) => (
+                      <div key={post.shortCode || i} className="rounded-xl p-3" style={{ background: "#1A1A1A", border: "1px solid #252525" }}>
+                        <div className="flex items-start gap-3">
+                          <span className="text-sm font-black shrink-0 w-5 text-center"
+                            style={{ color: i < 3 ? "#D4A017" : "#3A3A3A" }}>{i + 1}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-3 mb-1">
+                              <span className="text-xs font-bold" style={{ color: "#4ADE80" }}>
+                                👁 {post.views ? post.views.toLocaleString() : "—"}
+                              </span>
+                              <span className="text-xs text-ink-muted">❤️ {post.likes?.toLocaleString() ?? "—"}</span>
+                            </div>
+                            {post.hook && <p className="text-sm text-ink-primary leading-snug" dir="auto">"{post.hook}"</p>}
+                            {post.hashtags?.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1.5">
+                                {post.hashtags.slice(0, 4).map((h: string, j: number) => (
+                                  <span key={j} className="text-[10px] px-1.5 py-0.5 rounded-full"
+                                    style={{ background: "#2E2E2E", color: "#606060" }}>#{h}</span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-1 shrink-0">
+                            <a href={post.url} target="_blank" rel="noopener"
+                              className="text-xs px-2 py-1 rounded-lg"
+                              style={{ background: "#242424", color: "#A0A0A0" }}>↗</a>
+                            <button
+                              onClick={() => {
+                                if (post.hook) {
+                                  setScriptForm(f => ({ ...f, topic: post.hook }))
+                                  setTab("content")
+                                  setContentTab("script")
+                                }
+                              }}
+                              className="text-xs px-2 py-1 rounded-lg font-medium"
+                              style={{ background: "#3D0A0A", color: "#FF8080" }}>✍️</button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ════════════════════════════════════════════ */}
+          {/* CLASSIC MODE                                 */}
+          {/* ════════════════════════════════════════════ */}
+          {competitorMode === "classic" && (
+          <div className="space-y-4">
           {/* ── Scrape targets ──── */}
           <div className="rounded-2xl overflow-hidden" style={{ background: "#1A1A1A", border: "1px solid #252525" }}>
             <div className="flex items-center justify-between px-4 py-3 border-b border-surface-border">
@@ -1230,6 +1639,10 @@ export default function InstagramSuite() {
               )}
             </div>
           )}
+          </div>
+          )}
+          {/* end classic mode */}
+
         </div>
       )}
     </div>
