@@ -7,6 +7,7 @@ import clsx from "clsx"
 import type { ContentSeries, ContentVibe, ContentStatus } from "@/types"
 import SocialSection from "./SocialSection"
 import VoiceoverStudio from "./VoiceoverStudio"
+import ContentCalendar from "./ContentCalendar"
 
 // ── Tab definitions ─────────────────────────────────────────────
 const IG_TABS = [
@@ -19,6 +20,8 @@ const IG_TABS = [
 const CONTENT_TABS = [
   { id: "trending",  label: "Trending",   icon: "🔥" },
   { id: "script",    label: "Script AI",  icon: "✍️" },
+  { id: "repurpose", label: "Repurpose",  icon: "♻️" },
+  { id: "calendar",  label: "Calendar",   icon: "📅" },
   { id: "voiceover", label: "Voiceover",  icon: "🎙" },
   { id: "pipeline",  label: "Pipeline",   icon: "🎬" },
 ]
@@ -91,6 +94,12 @@ export default function InstagramSuite() {
     status: "idea" as ContentStatus, notes: ""
   })
 
+  // ── Repurpose state ──────────────────────────────────────────
+  const [repurposeInput, setRepurposeInput] = useState("")
+  const [repurposeResult, setRepurposeResult] = useState<any>(null)
+  const [repurposeLoading, setRepurposeLoading] = useState(false)
+  const [repurposeCopied, setRepurposeCopied] = useState<string | null>(null)
+
   // ── Competitor state ─────────────────────────────────────────
   const [handle, setHandle] = useState("")
   const [competitorResult, setCompetitorResult] = useState<any>(null)
@@ -115,6 +124,27 @@ export default function InstagramSuite() {
   })
 
   // ── API helpers ──────────────────────────────────────────────
+
+  async function repurposeContent() {
+    if (!repurposeInput.trim()) return
+    setRepurposeLoading(true)
+    setRepurposeResult(null)
+    try {
+      const res = await fetch("/api/repurpose", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: repurposeInput })
+      })
+      setRepurposeResult(await res.json())
+    } catch {}
+    setRepurposeLoading(false)
+  }
+
+  function copyRepurpose(text: string, key: string) {
+    navigator.clipboard.writeText(text)
+    setRepurposeCopied(key)
+    setTimeout(() => setRepurposeCopied(null), 2000)
+  }
 
   async function loadTrending() {
     setTrendingLoading(true)
@@ -643,6 +673,163 @@ export default function InstagramSuite() {
               )}
             </div>
           )}
+
+          {/* ── REPURPOSE ─────────────────────────────── */}
+          {contentTab === "repurpose" && (
+            <div className="space-y-4">
+              <div className="rounded-2xl p-5 space-y-4" style={{ background: "#1A1A1A", border: "1px solid #252525" }}>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">♻️</span>
+                  <div>
+                    <h2 className="font-bold text-ink-primary">أعد التوظيف</h2>
+                    <p className="text-xs text-ink-muted">حوّل فكرة أو كابشن واحد إلى عدة صيغ جاهزة</p>
+                  </div>
+                </div>
+                <div>
+                  <label className="label">الفكرة أو الكابشن الأصلي</label>
+                  <textarea
+                    className="input resize-none w-full text-sm"
+                    rows={5}
+                    dir="auto"
+                    placeholder="الصق أي نص هنا — كابشن، فكرة، هوك، أو حتى جملة واحدة..."
+                    value={repurposeInput}
+                    onChange={e => { setRepurposeInput(e.target.value); setRepurposeResult(null) }}
+                  />
+                </div>
+                <button
+                  onClick={repurposeContent}
+                  disabled={repurposeLoading || !repurposeInput.trim()}
+                  className="w-full py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-40"
+                  style={{ background: "#A51C1C", color: "#fff" }}>
+                  {repurposeLoading
+                    ? <span className="flex items-center justify-center gap-2">
+                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        جاري إعادة التوظيف...
+                      </span>
+                    : "♻️ ولّد الصيغ"}
+                </button>
+              </div>
+
+              {!repurposeResult && !repurposeLoading && (
+                <div className="text-center py-12 text-ink-muted">
+                  <p className="text-4xl mb-3">♻️</p>
+                  <p className="font-semibold text-ink-secondary">محتوى واحد ← صيغ كثيرة</p>
+                  <p className="text-sm mt-1">ريل، ستوري، هوك بديل، كابشن كامل، هاشتاقات</p>
+                </div>
+              )}
+
+              {repurposeResult && (
+                <div className="space-y-3">
+                  {/* Hook alternatives */}
+                  {repurposeResult.hooks?.length > 0 && (
+                    <div className="rounded-2xl p-4 space-y-2" style={{ background: "#1A1A1A", border: "1px solid #252525" }}>
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "#A51C1C" }}>⚡ هوك بديل (اختار الأقوى)</p>
+                        <button onClick={() => copyRepurpose(repurposeResult.hooks.join("\n"), "hooks")}
+                          className="text-xs text-ink-muted hover:text-ink-secondary">
+                          {repurposeCopied === "hooks" ? "✓" : "نسخ الكل"}
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        {repurposeResult.hooks.map((h: string, i: number) => (
+                          <div key={i} className="flex items-start gap-2 rounded-xl px-3 py-2.5" style={{ background: "#3D0A0A", border: "1px solid #5A1414" }}>
+                            <span className="text-xs font-black mt-0.5 shrink-0" style={{ color: "#FF8080" }}>
+                              {i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}
+                            </span>
+                            <p className="text-sm text-ink-primary flex-1" dir="rtl">{h}</p>
+                            <button onClick={() => copyRepurpose(h, `hook-${i}`)} className="text-xs text-ink-muted hover:text-ink-secondary shrink-0">
+                              {repurposeCopied === `hook-${i}` ? "✓" : "نسخ"}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Reel script */}
+                  {repurposeResult.reelScript && (
+                    <div className="rounded-2xl p-4" style={{ background: "#1A1A1A", border: "1px solid #252525" }}>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-bold uppercase tracking-wide text-ink-muted">🎬 سكريبت ريل (30-60 ثانية)</p>
+                        <button onClick={() => copyRepurpose(repurposeResult.reelScript, "reel")}
+                          className="text-xs text-ink-muted hover:text-ink-secondary">
+                          {repurposeCopied === "reel" ? "✓ تم" : "نسخ"}
+                        </button>
+                      </div>
+                      <p className="text-sm text-ink-secondary whitespace-pre-wrap leading-relaxed" dir="auto">{repurposeResult.reelScript}</p>
+                    </div>
+                  )}
+
+                  {/* Caption */}
+                  {repurposeResult.caption && (
+                    <div className="rounded-2xl p-4" style={{ background: "#1A1A1A", border: "1px solid #252525" }}>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-bold uppercase tracking-wide text-ink-muted">📝 كابشن كامل</p>
+                        <button onClick={() => copyRepurpose(`${repurposeResult.caption}\n\n${repurposeResult.hashtags?.join(" ")}`, "caption")}
+                          className="text-xs text-ink-muted hover:text-ink-secondary">
+                          {repurposeCopied === "caption" ? "✓ تم" : "نسخ مع هاشتاقات"}
+                        </button>
+                      </div>
+                      <p className="text-sm text-ink-secondary whitespace-pre-wrap leading-relaxed" dir="auto">{repurposeResult.caption}</p>
+                      {repurposeResult.hashtags?.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-3">
+                          {repurposeResult.hashtags.map((h: string, i: number) => (
+                            <span key={i} className="text-xs px-2 py-0.5 rounded-full" style={{ background: "#3D0A0A", color: "#FF8080" }}>{h}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Story */}
+                  {repurposeResult.storyText && (
+                    <div className="rounded-2xl p-4" style={{ background: "#1A1A1A", border: "1px solid #252525", borderLeft: "4px solid #D4A017" }}>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-bold uppercase" style={{ color: "#D4A017" }}>📲 نص ستوري</p>
+                        <button onClick={() => copyRepurpose(repurposeResult.storyText, "story")}
+                          className="text-xs text-ink-muted hover:text-ink-secondary">
+                          {repurposeCopied === "story" ? "✓" : "نسخ"}
+                        </button>
+                      </div>
+                      <p className="text-sm text-ink-secondary whitespace-pre-wrap" dir="auto">{repurposeResult.storyText}</p>
+                    </div>
+                  )}
+
+                  {/* Short version */}
+                  {repurposeResult.shortVersion && (
+                    <div className="rounded-2xl p-4" style={{ background: "#1A1A1A", border: "1px solid #252525" }}>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-bold uppercase tracking-wide text-ink-muted">✂️ نسخة مختصرة (لـ X / تغريدة)</p>
+                        <button onClick={() => copyRepurpose(repurposeResult.shortVersion, "short")}
+                          className="text-xs text-ink-muted hover:text-ink-secondary">
+                          {repurposeCopied === "short" ? "✓" : "نسخ"}
+                        </button>
+                      </div>
+                      <p className="text-sm text-ink-secondary" dir="auto">{repurposeResult.shortVersion}</p>
+                    </div>
+                  )}
+
+                  {/* Save to pipeline */}
+                  {repurposeResult.hooks?.[0] && (
+                    <button
+                      onClick={() => store.addIdea({
+                        series: "other", vibe: "viral", status: "scripted",
+                        hook: repurposeResult.hooks[0],
+                        script: `REEL:\n${repurposeResult.reelScript || ""}\n\nCAPTION:\n${repurposeResult.caption || ""}`,
+                        notes: "من أداة إعادة التوظيف"
+                      })}
+                      className="w-full py-2.5 rounded-xl text-sm font-bold transition-all"
+                      style={{ background: "#242424", color: "#D4A017", border: "1px solid #D4A01740" }}>
+                      💾 حفظ في البايبلاين
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── CALENDAR ──────────────────────────────── */}
+          {contentTab === "calendar" && <ContentCalendar />}
 
           {/* ── VOICEOVER ─────────────────────────────── */}
           {contentTab === "voiceover" && <VoiceoverStudio />}
